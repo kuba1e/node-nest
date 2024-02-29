@@ -1,0 +1,4 @@
+export enum SQS_MESSAGE_TYPE {
+  NEW_MESSAGE = 1,
+  NOTIFICATION = 2,
+}
