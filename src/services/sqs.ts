@@ -4,12 +4,16 @@ import { Logger } from '@nestjs/common';
 const client = new SQSClient({
   region: 'eu-north-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIAQ5V4IHKDFL2NM64Q',
+    secretAccessKey:
+      process.env.AWS_SECRET_ACCESS_KEY ||
+      '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',
   },
 });
 
-const queueUrl = process.env.AWS_SQS_QUEUE_URL;
+const queueUrl =
+  process.env.AWS_SQS_QUEUE_URL ||
+  'https://sqs.eu-north-1.amazonaws.com/063745571462/Messager';
 
 export const sendMessageToQueue = async (body) => {
   try {

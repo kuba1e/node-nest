@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chat } from './chat.entity';
-import { User } from 'src/user/user.entity';
 import { transformChatResponse } from 'src/utils/transformChatResponse';
 
 @Injectable()
@@ -25,8 +24,8 @@ export class ChatService {
         id,
       },
       relations: {
-        // users: true,
-        // userToChats: true,
+        users: true,
+        userToChats: true,
       },
     });
 

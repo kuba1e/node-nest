@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOneOptions, FindOptionsWhere, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { transformChatResponse } from 'src/utils/transformChatResponse';
 
@@ -11,15 +11,8 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
-  getUserByEmail(email: string) {
-    return this.userRepository.findOne({
-      where: {
-        email,
-      },
-      relations: {
-        settings: true,
-      },
-    });
+  getUserByEmail(options: FindOneOptions<User>) {
+    return this.userRepository.findOne(options);
   }
 
   getExtendedUserByEmail(email: string) {
@@ -34,18 +27,8 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  async getAllActiveUserChats(userId: string) {
-    const user = await this.userRepository.findOne({
-      relations: {
-        chats: {
-          users: true,
-          userToChats: true,
-        },
-      },
-      where: {
-        id: userId,
-      },
-    });
+  async getAllActiveUserChats(options: FindOneOptions<User>) {
+    const user = await this.userRepository.findOne(options);
     return user.chats?.map((chat) => transformChatResponse(chat));
   }
 

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  HttpCode,
   InternalServerErrorException,
   Logger,
   Post,
@@ -11,8 +12,9 @@ import { AuthService } from './auth.service';
 import { User } from 'src/user/user.entity';
 import { validate } from 'class-validator';
 import { UserService } from 'src/user/user.service';
+import { Public } from 'src/utils/isPublic';
 
-const saltRounds = Number(process.env.SALT_ROUNDS);
+const saltRounds = Number(process.env.SALT_ROUNDS || 10);
 
 @Controller('/public/auth')
 export class AuthController {
@@ -20,6 +22,7 @@ export class AuthController {
     private authService: AuthService,
     private userService: UserService,
   ) {}
+  @Public()
   @Post('/signin')
   async login(@Body() body: { email: string; password: string }) {
     try {
@@ -37,7 +40,6 @@ export class AuthController {
       );
 
       if (!passwordMatched) {
-        // res.unauthorized('Email or password is wrong!');
         Logger.log(
           `User ${user.email} provided wrong password: ${providedPassword}`,
         );
@@ -57,7 +59,14 @@ export class AuthController {
         user.id,
       );
 
-      const userResponse = await this.userService.getUserByEmail(email);
+      const userResponse = await this.userService.getUserByEmail({
+        where: {
+          email,
+        },
+        relations: {
+          settings: true,
+        },
+      });
 
       Logger.log(`Successfully found user: ${user.email}`);
 
@@ -72,6 +81,7 @@ export class AuthController {
     }
   }
 
+  @Public()
   @Post('/signup')
   async registration(@Body() body: Partial<User>) {
     try {
@@ -110,7 +120,14 @@ export class AuthController {
 
       await this.userService.saveNewUser(newUser);
 
-      const user = await this.userService.getUserByEmail(email);
+      const user = await this.userService.getUserByEmail({
+        where: {
+          email,
+        },
+        relations: {
+          settings: true,
+        },
+      });
 
       const tokens = this.authService.generateToken({
         id: user.id,

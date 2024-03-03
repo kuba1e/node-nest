@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
 import { MessageModule } from './message/message.module';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthGuard } from './auth/auth.guard';
 
 const database = 'messager';
 const username = 'postgres';
@@ -18,6 +20,7 @@ const port = 5432;
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host,
@@ -31,17 +34,22 @@ const port = 5432;
       migrations: ['src/migration/**'],
       autoLoadEntities: true,
     }),
-    ConfigModule.forRoot({
-      envFilePath: '.env',
-    }),
     UserModule,
     ChatModule,
     MessageModule,
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule {
   constructor(private dataSource: DataSource) {}
 }
+
+console.log(process.env.PORT);

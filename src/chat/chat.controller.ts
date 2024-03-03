@@ -10,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  Request,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserService } from 'src/user/user.service';
@@ -21,7 +22,7 @@ import { ChatService } from './chat.service';
 import { canUserManageChat } from 'src/utils/chat/canUserManageChat';
 import { UserToChat } from 'src/user/userToChat.entity';
 
-@Controller('chat')
+@Controller('/secure/chat')
 export class ChatController {
   constructor(
     private userService: UserService,
@@ -31,11 +32,21 @@ export class ChatController {
     private userToChatRepository: Repository<UserToChat>,
   ) {}
   @Get()
-  async getAllActiveUserChatsByUserId() {
+  async getAllActiveUserChatsByUserId(@Request() req) {
     try {
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
-      const chats = await this.userService.getAllActiveUserChats(userId);
+      const chats = await this.userService.getAllActiveUserChats({
+        relations: {
+          chats: {
+            users: true,
+            userToChats: true,
+          },
+        },
+        where: {
+          id: userId,
+        },
+      });
       Logger.log(`Successfully found chats for user with id: ${userId}`);
       return { data: chats };
     } catch (error) {
@@ -47,12 +58,13 @@ export class ChatController {
 
   @Post()
   async createChat(
+    @Request() req,
     @Body() body: { title: string; type: ChatType; chatParticipants: string[] },
   ) {
     try {
       const { title, type, chatParticipants } = body;
 
-      const creatorId = 'req.auth.id';
+      const creatorId = req.user.id;
 
       const user = await this.userService.findOneBy({ id: creatorId });
 
@@ -111,10 +123,13 @@ export class ChatController {
   }
 
   @Post('add-user')
-  async addUserToChatByEmail(@Body() body: { email: string; chatId: string }) {
+  async addUserToChatByEmail(
+    @Request() req,
+    @Body() body: { email: string; chatId: string },
+  ) {
     try {
       const { email, chatId } = body;
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
       const chat = await this.chatService.getById(chatId);
 
@@ -175,9 +190,9 @@ export class ChatController {
   }
 
   @Delete(':chatId')
-  async removeChat(@Param('chatId') chatId: string) {
+  async removeChat(@Request() req, @Param('chatId') chatId: string) {
     try {
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
       const chat = await this.chatService.getById(chatId);
 
@@ -209,11 +224,12 @@ export class ChatController {
 
   @Patch(':chatId')
   async updateChat(
+    @Request() req,
     @Param('chatId') chatId: string,
     @Body() chatInfo: Partial<Chat>,
   ) {
     try {
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
       const chat = await this.chatService.getById(chatId);
 

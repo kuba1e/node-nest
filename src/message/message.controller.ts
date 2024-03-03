@@ -11,6 +11,7 @@ import {
   Patch,
   Post,
   Query,
+  Request,
 } from '@nestjs/common';
 import { ChatService } from 'src/chat/chat.service';
 import { Status } from 'src/types/chat';
@@ -19,7 +20,7 @@ import { SQS_MESSAGE_TYPE } from 'src/types/sqs';
 import { Message } from './message.entity';
 import { sendMessageToQueue } from 'src/services/sqs';
 
-@Controller('message')
+@Controller('/secure/messages')
 export class MessageController {
   constructor(
     private readonly chatService: ChatService,
@@ -27,6 +28,7 @@ export class MessageController {
   ) {}
   @Get('/:chatId')
   async getByChatId(
+    @Request() req,
     @Param('chatId') chatId: string,
     @Query()
     query: {
@@ -36,7 +38,7 @@ export class MessageController {
   ) {
     try {
       const { offset = 0, pageSize = 20 } = query;
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
       const chat = await this.chatService.getById(chatId);
 
@@ -79,7 +81,7 @@ export class MessageController {
       });
 
       Logger.log(`Successfully found messages for chat with id: ${chatId}`);
-      return messages;
+      return { data: messages };
     } catch (error) {
       const message = `Internal Server Error: ${error.message}`;
       Logger.error(message);
@@ -89,7 +91,9 @@ export class MessageController {
 
   @Post('/:chatId')
   async createMessage(
-    @Param('chatId') chatId: string,
+    @Request() req,
+    @Param('chatId')
+    chatId: string,
     @Body()
     body: {
       text: string;
@@ -97,7 +101,7 @@ export class MessageController {
   ) {
     try {
       const { text } = body;
-      const userId = ' req.auth.id';
+      const userId = req.user.id;
 
       const chat = await this.chatService.getById(chatId);
 
@@ -153,12 +157,13 @@ export class MessageController {
 
   @Patch('/:messageId')
   async update(
+    @Request() req,
     @Param('messageId') messageId: string,
     @Body() body: Partial<Message>,
   ) {
     try {
       const messageToUpdate = body;
-      const userId = 'req.auth.id';
+      const userId = req.user.id;
 
       const message = await this.messageService.getOneBy({
         where: { id: messageId },
@@ -211,9 +216,9 @@ export class MessageController {
   }
 
   @Delete('/:messageId')
-  async delete(@Param('messageId') messageId: string) {
+  async delete(@Request() req, @Param('messageId') messageId: string) {
     try {
-      const userId = ' req.auth.id';
+      const userId = req.user.id;
 
       const message = await this.messageService.getOneBy({
         where: { id: messageId },
@@ -263,10 +268,13 @@ export class MessageController {
   }
 
   @Post('/:chatId/:messageId')
-  async forward(@Param() params: { chatId: string; messageId: string }) {
+  async forward(
+    @Request() req,
+    @Param() params: { chatId: string; messageId: string },
+  ) {
     try {
       const { messageId, chatId } = params;
-      const forwardedBy = 'req.auth.id';
+      const forwardedBy = req.user.id;
 
       if (!forwardedBy) {
         throw new BadRequestException(
