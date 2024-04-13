@@ -10,11 +10,13 @@ export enum ChatType {
   PRIVATE = 2,
 }
 
-export enum ChatOperations {
+export enum Actions {
+  MANAGE = 'manage',
   CREATE = 'create',
   UPDATE = 'update',
   REMOVE = 'remove',
   READ = 'read',
+  FORWARD = 'forward',
 }
 
 export type ChatResponse = Omit<Chat, 'userToChats'>;

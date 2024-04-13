@@ -1,4 +1,4 @@
-import { ChatOperations } from '../types/chat';
+import { Actions } from '../types/chat';
 import { AccessOptions } from '../types/settings';
 import { UserRole } from '../types/user';
 
@@ -10,10 +10,10 @@ export const DEFAULT_CHAT_SETTINGS = {
 
 export const USER_ROLE_TO_CHAT_PERMISSION_MAP = {
   [UserRole.ADMIN]: [
-    ChatOperations.CREATE,
-    ChatOperations.REMOVE,
-    ChatOperations.UPDATE,
-    ChatOperations.READ,
+    Actions.CREATE,
+    Actions.REMOVE,
+    Actions.UPDATE,
+    Actions.READ,
   ],
-  [UserRole.MEMBER]: [ChatOperations.READ],
+  [UserRole.MEMBER]: [Actions.READ],
 };

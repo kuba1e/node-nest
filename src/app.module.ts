@@ -11,33 +11,31 @@ import { ChatModule } from './chat/chat.module';
 import { MessageModule } from './message/message.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth/auth.guard';
-
-const database = 'messager';
-const username = 'postgres';
-const password = 'admin';
-const host = 'localhost';
-const port = 5432;
+import { CaslModule } from './casl/casl.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host,
-      port,
-      username,
-      password,
-      database,
-      synchronize: false,
-      logging: true,
-      cache: true,
-      migrations: ['src/migration/**'],
-      autoLoadEntities: true,
+    TypeOrmModule.forRootAsync({
+      useFactory: () => ({
+        type: 'postgres',
+        host: process.env.DATABASE_HOST,
+        port: Number(process.env.DATABASE_PORT),
+        username: process.env.DATABASE_USER_NAME,
+        password: process.env.DATABASE_USER_PASSWORD,
+        database: process.env.DATABASE_NAME,
+        synchronize: false,
+        logging: true,
+        cache: true,
+        migrations: ['src/migration/**'],
+        autoLoadEntities: true,
+      }),
     }),
     UserModule,
     ChatModule,
     MessageModule,
     AuthModule,
+    CaslModule,
   ],
   controllers: [AppController],
   providers: [
@@ -51,5 +49,3 @@ const port = 5432;
 export class AppModule {
   constructor(private dataSource: DataSource) {}
 }
-
-console.log(process.env.PORT);

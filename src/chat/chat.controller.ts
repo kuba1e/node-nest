@@ -17,10 +17,11 @@ import { UserService } from 'src/user/user.service';
 import { DataSource, Repository } from 'typeorm';
 import { Chat } from './chat.entity';
 import { UserRole } from 'src/types/user';
-import { ChatOperations, ChatType, Status } from 'src/types/chat';
+import { Actions, ChatType, Status } from 'src/types/chat';
 import { ChatService } from './chat.service';
 import { canUserManageChat } from 'src/utils/chat/canUserManageChat';
 import { UserToChat } from 'src/user/userToChat.entity';
+import { CaslAbilityFactory } from 'src/casl/casl-ability.factory';
 
 @Controller('/secure/chat')
 export class ChatController {
@@ -30,6 +31,7 @@ export class ChatController {
     private dataSource: DataSource,
     @InjectRepository(UserToChat)
     private userToChatRepository: Repository<UserToChat>,
+    private caslAbilityFactory: CaslAbilityFactory,
   ) {}
   @Get()
   async getAllActiveUserChatsByUserId(@Request() req) {
@@ -68,13 +70,18 @@ export class ChatController {
 
       const user = await this.userService.findOneBy({ id: creatorId });
 
+      const ability = this.caslAbilityFactory.createForUser(user);
+      console.log(ability.can(Actions.UPDATE, Chat));
+
       if (!user) {
         const message = 'User does not exist.';
         Logger.error(message);
         throw new BadRequestException(message);
       }
 
-      const users = await this.userService.getManyByEmails(chatParticipants);
+      const users = await this.userService.getManyByEmails(
+        chatParticipants || [],
+      );
 
       const chatUsers = [user, ...users];
 
@@ -131,7 +138,11 @@ export class ChatController {
       const { email, chatId } = body;
       const userId = req.user.id;
 
+      const user = await this.userService.findOneBy({ id: userId });
+
       const chat = await this.chatService.getById(chatId);
+
+      const ability = this.caslAbilityFactory.createForUser(user);
 
       if (!chat) {
         const message = 'Chat does not exist.';
@@ -155,9 +166,9 @@ export class ChatController {
         throw new BadRequestException(message);
       }
 
-      if (
-        !canUserManageChat({ userId, chat, operation: ChatOperations.UPDATE })
-      ) {
+      console.log(ability.can(Actions.UPDATE, Chat));
+
+      if (!ability.can(Actions.UPDATE, Chat)) {
         const message = 'User does not have permission to update chat.';
         Logger.error(message);
         throw new ForbiddenException(message);
@@ -202,9 +213,7 @@ export class ChatController {
         throw new BadRequestException(message);
       }
 
-      if (
-        !canUserManageChat({ userId, chat, operation: ChatOperations.REMOVE })
-      ) {
+      if (!canUserManageChat({ userId, chat, operation: Actions.REMOVE })) {
         const message = 'User does not have permission to remove chat.';
         Logger.error(message);
         throw new ForbiddenException(message);
@@ -247,9 +256,7 @@ export class ChatController {
         throw new BadRequestException(message);
       }
 
-      if (
-        !canUserManageChat({ userId, chat, operation: ChatOperations.UPDATE })
-      ) {
+      if (!canUserManageChat({ userId, chat, operation: Actions.UPDATE })) {
         const message = 'User does not have permission to update chat.';
         Logger.error(message);
         throw new ForbiddenException(message);

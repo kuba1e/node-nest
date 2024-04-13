@@ -1,5 +1,5 @@
 import { User } from 'src/user/user.entity';
-import { ChatOperations } from '../../types/chat';
+import { Actions } from '../../types/chat';
 import { getUserRoleInChat } from './getUserRoleInChat';
 import { Chat } from 'src/chat/chat.entity';
 import { USER_ROLE_TO_CHAT_PERMISSION_MAP } from 'src/constants/chat';
@@ -11,7 +11,7 @@ export function canUserManageChat({
 }: {
   userId: User['id'];
   chat: Chat;
-  operation: ChatOperations;
+  operation: Actions;
 }) {
   // const isUserCreator = chat.creatorId === userId;
   // const userRoleInChat = getUserRoleInChat(userId, chat);

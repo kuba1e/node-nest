@@ -1,19 +1,19 @@
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import { Logger } from '@nestjs/common';
+import * as dotenv from 'dotenv';
+import * as dotenvExpand from 'dotenv-expand';
+
+dotenvExpand.expand(dotenv.config());
 
 const client = new SQSClient({
   region: 'eu-north-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIAQ5V4IHKDFL2NM64Q',
-    secretAccessKey:
-      process.env.AWS_SECRET_ACCESS_KEY ||
-      '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',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
 
-const queueUrl =
-  process.env.AWS_SQS_QUEUE_URL ||
-  'https://sqs.eu-north-1.amazonaws.com/063745571462/Messager';
+const queueUrl = process.env.AWS_SQS_QUEUE_URL;
 
 export const sendMessageToQueue = async (body) => {
   try {
